@@ -1,0 +1,46 @@
+import pandas as pd
+import numpy as np
+
+data = pd.read_csv("thanksgiving.csv", encoding = "Latin-1")
+is_celebrated = data[data["Do you celebrate Thanksgiving?"] == "Yes"]
+count = data["Do you celebrate Thanksgiving?"].value_counts()
+dishes = data["What is typically the main dish at your Thanksgiving dinner?"].value_counts()
+Tofurkey = data[data["What is typically the main dish at your Thanksgiving dinner?"] == "Tofurkey"]
+apple_isnull = data["Which type of pie is typically served at your Thanksgiving dinner? Please select all that apply. - Apple"].isnull()
+pumpkin_isnull = data["Which type of pie is typically served at your Thanksgiving dinner? Please select all that apply. - Pumpkin"].isnull()
+pecan_isnull = data["Which type of pie is typically served at your Thanksgiving dinner? Please select all that apply. - Pecan"].isnull()
+ate_pies = apple_isnull & pumpkin_isnull & pecan_isnull
+data["ate_pies"] = ate_pies
+data["ate_pies"].value_counts()
+
+def age_bucket(a):
+    if pd.isnull(a):
+        return "None"
+    elif "+" not in a:
+        return int(a.split(" ",1)[0])
+    else:
+        return int(a.replace("+", ""))
+
+int_age = data["Age"]
+int_age = int_age.apply(age_bucket)
+data["int_age"] =  int_age
+data["int_age"].describe()
+
+def income_bucket(i):
+    if pd.isnull(i):
+        return "None"
+    elif i.split(" ", 1)[0] == "Prefer":
+        return "None"
+    else:
+        return int(i.replace("$", "").replace(",", "").split(" ", 1)[0])
+    
+income_col = data["How much total combined money did all members of your HOUSEHOLD earn last year?"]
+data["int_income"] = income_col.apply(income_bucket)
+data2 = data[data["int_income"] != "None"]
+data = data2[data2["int_income"] < 150000]
+data["How far will you travel for Thanksgiving?"].value_counts()
+
+data.pivot_table(index = "Have you ever tried to meet up with hometown friends on Thanksgiving night?",
+                 columns = 'Have you ever attended a "Friendsgiving?"',
+                 values = ["int_age", "int_income"],
+                 aggfunc = np.sum)
